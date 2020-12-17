@@ -46,7 +46,7 @@ def train_init(args, alpha_files, k, device):
     train_size = len(train_data)
 
     alpha_files[k] = 'alpha-' + str(k)
-    model = Model(args, num_clasees, word_embeddings, device)
+    model = Model(args, num_clasees, word_embeddings, device).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     # optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=.9)
     # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.95)
@@ -98,7 +98,7 @@ def train_final(args, alpha_files, k, device):
     train_size = len(train_data)
 
     alpha_files[k] = 'alpha-' + str(k)
-    model = Model(args, num_clasees, word_embeddings, device)
+    model = Model(args, num_clasees, word_embeddings, device).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     # optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=.9)
     # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.95)
