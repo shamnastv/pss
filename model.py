@@ -113,7 +113,7 @@ class Model(nn.Module):
         query = torch.max(e, dim=2)[0].unsqueeze(1)
 
         alpha = torch.bmm(z, query.transpose(1, 2))
-        alpha.masked_fill_(masks.unsqueeze(2), -np.inf)
+        alpha.masked_fill_(masks.unsqueeze(2), -1e9)
         alpha = F.softmax(alpha, 1)
         z = torch.bmm(alpha.transpose(1, 2), z)
         z = self.fc(z.squeeze(1))
