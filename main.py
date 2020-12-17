@@ -158,7 +158,7 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.5, help='Dropout (default: 0.3)')
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay (default: 0.3)')
     parser.add_argument('--early_stop', type=int, default=5, help='early stop')
-    parser.add_argument('--lamda', type=float, default=.1, help='lamda')
+    parser.add_argument('--beta', type=float, default=.1, help='beta')
 
     args = parser.parse_args()
 
