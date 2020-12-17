@@ -89,7 +89,7 @@ def train_init(args, alpha_files, k, device):
         print('')
 
     if alphas_to_save is not None:
-        np.savetxt(alpha_files, alphas_to_save)
+        np.savetxt(alpha_files[k], alphas_to_save)
 
     return alpha_files
 
