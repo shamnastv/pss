@@ -85,6 +85,7 @@ class Model(nn.Module):
 
         self.fc1 = nn.Linear(4 * args.hidden_dim, 2 * args.hidden_dim)
         self.fc = nn.Linear(2 * args.hidden_dim, num_clasees)
+        self.dropout = nn.Dropout(args.dropout)
 
     def forward(self, inputs, initial):
         feature_ids, aspect_ids, feature_lens, aspect_lens, position_weight, masks, target, a_mask, a_value\
@@ -95,14 +96,15 @@ class Model(nn.Module):
         v, (_, _) = self.lstm1(features, feature_lens)
         e, (_, _) = self.lstm2(aspects, aspect_lens)
 
-        v = v.transpose(1, 2)
-        e = e.transpose(1, 2)
+        v = self.dropout(v.transpose(1, 2))
+        e = self.dropout(e.transpose(1, 2))
         for i in range(2):
             a = torch.bmm(e.transpose(1, 2), v)
             a = F.softmax(a, 1)  # (aspect_len,context_len)
             aspect_mid = torch.bmm(e, a)
             aspect_mid = torch.cat((aspect_mid, v), dim=1).transpose(1, 2)
             aspect_mid = F.relu(self.fc1(aspect_mid).transpose(1, 2))
+            aspect_mid = self.dropout(aspect_mid)
             v = aspect_mid + v
             v = self.position(v.transpose(1, 2), position_weight).transpose(1, 2)
 
