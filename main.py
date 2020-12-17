@@ -53,7 +53,7 @@ def train_init(args, alpha_files, k, device):
 
     alphas_to_save = None
     batch_size = args.batch_size
-    for i in range(1, args.epochs + 1):
+    for epoch in range(1, args.epochs + 1):
         train_idx = np.random.permutation(train_size)
         loss_accum = 0
         for i in range(0, train_size, batch_size):
@@ -69,6 +69,8 @@ def train_init(args, alpha_files, k, device):
             loss = loss.detach().cpu().numpy()
             loss_accum += loss
 
+        print('epoch :', epoch, 'loss :', loss_accum, flush=True)
+
         outputs, alpha, targets,  = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
         pred_train = outputs.max(1, keepdim=True)[1]
         correct = pred_train.eq(targets.view_as(pred_train)).sum().cpu().item()
@@ -78,6 +80,8 @@ def train_init(args, alpha_files, k, device):
             max_test_acc = test_acc
             outputs, alphas, targets = pass_data_iteratively(model, train_data, batch_size=128, initial=True)
             alphas_to_save = alphas.detach().cpu().numpy()
+
+        print('epoch :', epoch, 'accuracy :', test_acc, flush=True)
 
     if alphas_to_save is not None:
         np.savetxt(alpha_files, alphas_to_save)
@@ -104,7 +108,7 @@ def train_final(args, alpha_files, k, device):
     # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.95)
 
     batch_size = args.batch_size
-    for i in range(1, args.epochs + 1):
+    for epoch in range(1, args.epochs + 1):
         train_idx = np.random.permutation(train_size)
         loss_accum = 0
         for i in range(0, train_size, batch_size):
@@ -121,6 +125,7 @@ def train_final(args, alpha_files, k, device):
 
             loss = loss.detach().cpu().numpy()
             loss_accum += loss
+        print('epoch :', epoch, 'loss :', loss_accum, flush=True)
 
         outputs, alpha, targets = pass_data_iteratively(model, test_data, batch_size=128, initial=False)
         pred_train = outputs.max(1, keepdim=True)[1]
@@ -129,7 +134,7 @@ def train_final(args, alpha_files, k, device):
 
         if test_acc > max_test_acc:
             max_test_acc = test_acc
-        print('test accuracy', test_acc)
+        print('epoch :', epoch, 'accuracy :', test_acc, flush=True)
 
     return alpha_files
 
