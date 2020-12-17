@@ -164,9 +164,9 @@ def get_attention_mask_final(dataset, alphas_list):
                     amasks[index] = 1.0  # erasing
                     if alphas[i][index] > 0:
                         avalues[index] = 1.0
-        dataset[i]['mask'].extend(masks)
-        dataset[i]['amask'].extend(amasks)
-        dataset[i]['avalue'].extend(avalues)
+        dataset[i]['mask'] = masks
+        dataset[i]['amask'] = amasks
+        dataset[i]['avalue'] = avalues
 
     return dataset
 
