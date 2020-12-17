@@ -21,7 +21,7 @@ def get_embedding(word_to_id, dataset):
                     except ValueError:
                         pass
         # print("Find %s word embeddings!!" % n_emb)
-        pickle.dump(embeddings, open(pickle_file, 'wb'))  # Storage, easy to read next time
-    else:  # If it has been read, load it directly
+        # pickle.dump(embeddings, open(pickle_file, 'wb'))  # Storage, easy to read next time
+    else:
         embeddings = pickle.load(open(pickle_file, 'rb'))
     return embeddings

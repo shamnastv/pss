@@ -1,4 +1,6 @@
 import numpy as np
+import pickle
+import os
 
 from util import get_embedding
 
@@ -184,27 +186,7 @@ def get_attention_mask_test(dataset):
 
 
 def load_data(dataset_name, alpha_files, erase=True):
-    train_file = './dataset/' + dataset_name + '/train.txt'
-    test_file = './dataset/' + dataset_name + '/test.txt'
-
-    train_data = read(train_file)
-    test_data = read(test_file)
-
-    train_wc = [t['wc'] for t in train_data]
-    test_wc = [t['wc'] for t in test_data]
-    max_len = max(train_wc + test_wc)
-
-    train_wc_t = [t['wct'] for t in train_data]
-    test_wc_t = [t['wct'] for t in test_data]
-    max_len_t = max(train_wc_t + test_wc_t)
-
-    train_data = add_pos_weight(train_data, max_len)
-    test_data = add_pos_weight(test_data, max_len)
-
-    word_to_id, word_list = get_vocab(train_data + test_data)
-
-    train_data = data_word_to_id(train_data, word_to_id, max_len, max_len_t)
-    test_data = data_word_to_id(test_data, word_to_id, max_len, max_len_t)
+    embeddings, test_data, train_data, word_list, word_to_id = get_dataset(dataset_name)
 
     alphas_list = []
     for i in range(len(alpha_files)):
@@ -219,7 +201,33 @@ def load_data(dataset_name, alpha_files, erase=True):
         train_data = get_attention_mask_final(dataset=train_data, alphas_list=alphas_list)
     test_data = get_attention_mask_test(dataset=test_data)
 
+    return {'train': train_data, 'test': test_data}, word_to_id, word_list, embeddings
+
+
+def get_dataset(dataset_name):
+    pickle_file = './embeddings/%s_dump.pkl' % dataset_name
+    if not os.path.exists(pickle_file):
+        return pickle.load(open(pickle_file, 'rb'))
+
+    train_file = './dataset/' + dataset_name + '/train.txt'
+    test_file = './dataset/' + dataset_name + '/test.txt'
+    train_data = read(train_file)
+    test_data = read(test_file)
+    train_wc = [t['wc'] for t in train_data]
+    test_wc = [t['wc'] for t in test_data]
+    max_len = max(train_wc + test_wc)
+    train_wc_t = [t['wct'] for t in train_data]
+    test_wc_t = [t['wct'] for t in test_data]
+    max_len_t = max(train_wc_t + test_wc_t)
+    train_data = add_pos_weight(train_data, max_len)
+    test_data = add_pos_weight(test_data, max_len)
+    word_to_id, word_list = get_vocab(train_data + test_data)
+    train_data = data_word_to_id(train_data, word_to_id, max_len, max_len_t)
+    test_data = data_word_to_id(test_data, word_to_id, max_len, max_len_t)
     embeddings = get_embedding(word_to_id, dataset_name)
 
-    return {'train': train_data, 'test': test_data}, word_to_id, word_list, embeddings
+    data = embeddings, test_data, train_data, word_list, word_to_id
+    pickle.dump(data, open(pickle_file, 'wb'))
+
+    return embeddings, test_data, train_data, word_list, word_to_id
 
