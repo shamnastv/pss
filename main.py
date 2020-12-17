@@ -72,16 +72,21 @@ def train_init(args, alpha_files, k, device):
         print('epoch :', epoch, 'loss :', loss_accum, flush=True)
 
         outputs, alpha, targets,  = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
-        pred_train = outputs.max(1, keepdim=True)[1]
-        correct = pred_train.eq(targets.view_as(pred_train)).sum().cpu().item()
+        pred_test = outputs.max(1, keepdim=True)[1]
+        correct = pred_test.eq(targets.view_as(pred_test)).sum().cpu().item()
         test_acc = correct / float(len(targets))
 
         if test_acc > max_test_acc:
             max_test_acc = test_acc
             outputs, alphas, targets = pass_data_iteratively(model, train_data, batch_size=128, initial=True)
+            pred_test = outputs.max(1, keepdim=True)[1].view_as(targets)
             alphas_to_save = alphas.detach().cpu().numpy()
+            for ind in range(len(pred_test)):
+                if pred_test[ind] != targets[ind]:
+                    alphas_to_save[ind] = -alphas_to_save[ind]
 
         print('epoch :', epoch, 'accuracy :', test_acc, flush=True)
+        print('')
 
     if alphas_to_save is not None:
         np.savetxt(alpha_files, alphas_to_save)
@@ -135,6 +140,7 @@ def train_final(args, alpha_files, k, device):
         if test_acc > max_test_acc:
             max_test_acc = test_acc
         print('epoch :', epoch, 'accuracy :', test_acc, flush=True)
+        print('')
 
     return alpha_files
 
