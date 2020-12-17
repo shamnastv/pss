@@ -132,9 +132,9 @@ def train_final(args, alpha_files, k, device):
             loss_accum += loss
         print('epoch :', epoch, 'loss :', loss_accum, flush=True)
 
-        outputs, alpha, targets = pass_data_iteratively(model, test_data, batch_size=128, initial=False)
-        pred_train = outputs.max(1, keepdim=True)[1]
-        correct = pred_train.eq(targets.view_as(pred_train)).sum().cpu().item()
+        outputs, alpha, targets = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
+        pred_test = outputs.max(1, keepdim=True)[1]
+        correct = pred_test.eq(targets.view_as(pred_test)).sum().cpu().item()
         test_acc = correct / float(len(targets))
 
         if test_acc > max_test_acc:
