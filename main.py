@@ -85,7 +85,7 @@ def train_init(args, alpha_files, k, device):
                 if pred_test[ind] != targets[ind]:
                     alphas_to_save[ind] = -alphas_to_save[ind]
 
-        print('epoch :', epoch, 'accuracy :', test_acc, flush=True)
+        print('initial', k, 'epoch :', epoch, 'accuracy :', test_acc, flush=True)
         print('')
 
     if alphas_to_save is not None:
@@ -97,6 +97,7 @@ def train_init(args, alpha_files, k, device):
 def train_final(args, alpha_files, k, device):
     max_test_acc = 0
     num_clasees = 3
+    alpha_files[k] = 'alpha-' + str(k)
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alpha_files, False)
     args.embed_dim = len(word_embeddings[1])
     args.sent_len = len(dataset['train'][0]['wid'])
@@ -106,7 +107,6 @@ def train_final(args, alpha_files, k, device):
     test_data = dataset['test']
     train_size = len(train_data)
 
-    alpha_files[k] = 'alpha-' + str(k)
     model = Model(args, num_clasees, word_embeddings, device).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     # optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=.9)
@@ -139,7 +139,7 @@ def train_final(args, alpha_files, k, device):
 
         if test_acc > max_test_acc:
             max_test_acc = test_acc
-        print('epoch :', epoch, 'accuracy :', test_acc, flush=True)
+        print('final', k, 'epoch :', epoch, 'accuracy :', test_acc, flush=True)
         print('')
 
     return alpha_files
@@ -151,7 +151,7 @@ def main():
     parser.add_argument('--device', type=int, default=0, help='which gpu to use if any (default: 0)')
     parser.add_argument('--hidden_dim', type=int, default=50, help='hidden dimension')
     parser.add_argument('--num_layers', type=int, default=1, help='number of layers')
-    parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 100)')
+    parser.add_argument('--epochs', type=int, default=50, help='number of epochs to train (default: 100)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-4)')
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size')
@@ -174,9 +174,10 @@ def main():
         torch.cuda.manual_seed_all(0)
 
     print('device : ', device, flush=True)
-    alpha_files = [None for i in range(5)]
 
-    max_k = 2
+    max_k = 5
+    alpha_files = [None for i in range(max_k)]
+
     for k in range(max_k):
         alpha_files = train_init(args, alpha_files, k, device)
 
