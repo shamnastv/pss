@@ -56,7 +56,6 @@ def get_features(inputs, device, initial):
     aspect_ids = torch.tensor(aspect_ids).long().to(device)
     feature_lens = torch.tensor(feature_lens).long().to(device)
     aspect_lens = torch.tensor(aspect_lens).long().to(device)
-    print([len(p) for p in position_weight])
     position_weight = torch.tensor(position_weight).float().to(device)
     masks = torch.tensor(masks).float().to(device)
     masks = masks.eq(0)
