@@ -206,7 +206,7 @@ def load_data(dataset_name, alpha_files, erase=True):
 
 def get_dataset(dataset_name):
     pickle_file = './embeddings/%s_dump.pkl' % dataset_name
-    if not os.path.exists(pickle_file):
+    if os.path.exists(pickle_file):
         return pickle.load(open(pickle_file, 'rb'))
 
     train_file = './dataset/' + dataset_name + '/train.txt'
