@@ -92,6 +92,8 @@ def train_init(args, alphas_list, k, device):
 
         print('initial', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
         print('')
+    print('max test accuracy : ', max_test_acc)
+    print('=' * 100)
 
     # if alphas_to_save is not None:
     #     np.savetxt(alpha_files[k], alphas_to_save)
@@ -155,6 +157,9 @@ def train_final(args, alphas_list, k, device):
 
         print('')
 
+    print('max test accuracy : ', max_test_acc)
+    print('=' * 100)
+
     return alphas_list
 
 
@@ -168,7 +173,7 @@ def main():
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-4)')
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size')
-    parser.add_argument('--dropout', type=float, default=0.5, help='Dropout (default: 0.3)')
+    parser.add_argument('--dropout', type=float, default=0.3, help='Dropout (default: 0.3)')
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay (default: 0.3)')
     parser.add_argument('--early_stop', type=int, default=5, help='early stop')
     parser.add_argument('--beta', type=float, default=.1, help='beta')

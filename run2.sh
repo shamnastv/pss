@@ -7,5 +7,5 @@
 #SBATCH --partition=cl1_48h-1G
 
 python3 main.py --hidden_dim 50 --lr .001 --batch_size 25
-python3 main.py --hidden_dim 100 --lr .001 --batch_size 25
-python3 main.py --hidden_dim 300 --lr .001 --batch_size 25
+python3 main.py --hidden_dim 50 --lr .0005 --batch_size 25
+python3 main.py --hidden_dim 50 --lr .0001 --batch_size 25
