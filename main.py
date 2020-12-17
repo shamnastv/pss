@@ -99,8 +99,8 @@ def train_final(args, alpha_files, k, device):
     num_clasees = 3
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alpha_files, True)
     args.embed_dim = len(word_embeddings[1])
-    args.sent_len = len(dataset['train'][0]['wids'])
-    args.target_len = len(dataset['train'][0]['tids'])
+    args.sent_len = len(dataset['train'][0]['wid'])
+    args.target_len = len(dataset['train'][0]['tid'])
 
     train_data = dataset['train']
     test_data = dataset['test']
