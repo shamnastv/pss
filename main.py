@@ -151,7 +151,7 @@ def main():
     parser.add_argument('--device', type=int, default=0, help='which gpu to use if any (default: 0)')
     parser.add_argument('--hidden_dim', type=int, default=300, help='hidden dimension')
     parser.add_argument('--num_layers', type=int, default=1, help='number of layers')
-    parser.add_argument('--epochs', type=int, default=100, help='number of epochs to train (default: 100)')
+    parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 100)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-4)')
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size')
