@@ -109,12 +109,12 @@ class Model(nn.Module):
             v = self.position(v.transpose(1, 2), position_weight).transpose(1, 2)
 
         v = v.transpose(1, 2)
-        z, (_, _) = self.lstm3(v, feature_lens)
+        # z, (_, _) = self.lstm3(v, feature_lens)
         query = torch.max(e, dim=2)[0].unsqueeze(1)
 
-        alpha = torch.bmm(z, query.transpose(1, 2))
+        alpha = torch.bmm(v, query.transpose(1, 2))
         alpha.masked_fill_(masks.unsqueeze(2), -1e9)
         alpha = F.softmax(alpha, 1)
-        z = torch.bmm(alpha.transpose(1, 2), z)
+        z = torch.bmm(alpha.transpose(1, 2), v)
         z = self.fc(z.squeeze(1))
         return z, alpha.squeeze(2), target, a_mask, a_value
