@@ -33,10 +33,10 @@ def pass_data_iteratively(model, x, initial, batch_size=128):
     return torch.cat(outputs), torch.cat(alphas), torch.cat(targets)
 
 
-def train_init(args, alpha_files, k, device):
+def train_init(args, alphas_list, k, device):
     max_test_acc = 0
     num_clasees = 3
-    dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alpha_files, True)
+    dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, True)
     args.embed_dim = len(word_embeddings[1])
     args.sent_len = len(dataset['train'][0]['wid'])
     args.target_len = len(dataset['train'][0]['tid'])
@@ -45,7 +45,7 @@ def train_init(args, alpha_files, k, device):
     test_data = dataset['test']
     train_size = len(train_data)
 
-    alpha_files[k] = 'alpha-' + str(k)
+    # alpha_files[k] = 'alpha-' + str(k)
     model = Model(args, num_clasees, word_embeddings, device).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     # optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=.9)
@@ -71,34 +71,39 @@ def train_init(args, alpha_files, k, device):
 
         print('epoch :', epoch, 'loss :', loss_accum, flush=True)
 
-        outputs, alpha, targets,  = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
-        pred_test = outputs.max(1, keepdim=True)[1]
-        correct = pred_test.eq(targets.view_as(pred_test)).sum().cpu().item()
-        test_acc = correct / float(len(targets))
+        outputs_train, alphas_train, targets_train = pass_data_iteratively(model, train_data, batch_size=128,
+                                                                           initial=True)
+        pred_train = outputs_train.max(1, keepdim=True)[1]
+        correct = pred_train.eq(targets_train.view_as(pred_train)).sum().cpu().item()
+        train_acc = correct / float(len(targets_train))
+
+        outputs_test, alpha_test, targets_test = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
+        pred_test = outputs_test.max(1, keepdim=True)[1]
+        correct = pred_test.eq(targets_test.view_as(pred_test)).sum().cpu().item()
+        test_acc = correct / float(len(targets_test))
 
         if test_acc > max_test_acc:
             max_test_acc = test_acc
-            outputs, alphas, targets = pass_data_iteratively(model, train_data, batch_size=128, initial=True)
-            pred_test = outputs.max(1, keepdim=True)[1].view_as(targets)
-            alphas_to_save = alphas.detach().cpu().numpy()
-            for ind in range(len(pred_test)):
-                if pred_test[ind] != targets[ind]:
+            pred_train = pred_train.view_as(targets_train)
+            alphas_to_save = alphas_train.detach().cpu().numpy()
+            for ind in range(len(pred_train)):
+                if pred_train[ind] != targets_train[ind]:
                     alphas_to_save[ind] = -alphas_to_save[ind]
 
-        print('initial', k, 'epoch :', epoch, 'accuracy :', test_acc, flush=True)
+        print('initial', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
         print('')
 
-    if alphas_to_save is not None:
-        np.savetxt(alpha_files[k], alphas_to_save)
+    # if alphas_to_save is not None:
+    #     np.savetxt(alpha_files[k], alphas_to_save)
+    alphas_list.append(alphas_to_save)
+    return alphas_list
 
-    return alpha_files
 
-
-def train_final(args, alpha_files, k, device):
+def train_final(args, alphas_list, k, device):
     max_test_acc = 0
     num_clasees = 3
-    alpha_files[k] = 'alpha-' + str(k)
-    dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alpha_files, False)
+    # alpha_files[k] = 'alpha-' + str(k)
+    dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, False)
     args.embed_dim = len(word_embeddings[1])
     args.sent_len = len(dataset['train'][0]['wid'])
     args.target_len = len(dataset['train'][0]['tid'])
@@ -132,17 +137,25 @@ def train_final(args, alpha_files, k, device):
             loss_accum += loss
         print('epoch :', epoch, 'loss :', loss_accum, flush=True)
 
-        outputs, alpha, targets = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
-        pred_test = outputs.max(1, keepdim=True)[1]
-        correct = pred_test.eq(targets.view_as(pred_test)).sum().cpu().item()
-        test_acc = correct / float(len(targets))
+        outputs_train, alphas_train, targets_train = pass_data_iteratively(model, train_data, batch_size=128,
+                                                                           initial=True)
+        pred_train = outputs_train.max(1, keepdim=True)[1]
+        correct = pred_train.eq(targets_train.view_as(pred_train)).sum().cpu().item()
+        train_acc = correct / float(len(targets_train))
+
+        outputs_test, alpha_test, targets_test = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
+        pred_test = outputs_test.max(1, keepdim=True)[1]
+        correct = pred_test.eq(targets_test.view_as(pred_test)).sum().cpu().item()
+        test_acc = correct / float(len(targets_test))
 
         if test_acc > max_test_acc:
             max_test_acc = test_acc
-        print('final', k, 'epoch :', epoch, 'accuracy :', test_acc, flush=True)
+
+        print('initial', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
+
         print('')
 
-    return alpha_files
+    return alphas_list
 
 
 def main():
@@ -176,14 +189,15 @@ def main():
     print('device : ', device, flush=True)
 
     max_k = 5
-    alpha_files = [None for i in range(max_k)]
+    alphas_list = []
 
     for k in range(max_k):
-        alpha_files = train_init(args, alpha_files, k, device)
+        alphas_list = train_init(args, alphas_list, k, device)
 
-    alpha_files = [None for i in range(5)]
+    alphas_list_new = []
     for k in range(max_k):
-        alpha_files = train_final(args, alpha_files, k, device)
+        alphas_list_new.append(alphas_list[i])
+        alphas_list = train_final(args, alphas_list, k, device)
 
 
 if __name__ == '__main__':

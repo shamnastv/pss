@@ -185,15 +185,15 @@ def get_attention_mask_test(dataset):
     return dataset
 
 
-def load_data(dataset_name, alpha_files, erase=True):
+def load_data(dataset_name, alphas_list, erase=True):
     embeddings, test_data, train_data, word_list, word_to_id = get_dataset(dataset_name)
 
-    alphas_list = []
-    for i in range(len(alpha_files)):
-        if alpha_files[i] is not None:
-            alphas_list.append(np.loadtxt(alpha_files[i]))
-        else:
-            alphas_list.append(None)
+    # alphas_list = []
+    # for i in range(len(alpha_files)):
+    #     if alpha_files[i] is not None:
+    #         alphas_list.append(np.loadtxt(alpha_files[i]))
+    #     else:
+    #         alphas_list.append(None)
 
     if erase:
         train_data = get_attention_mask_forerasing(dataset=train_data, alphas_list=alphas_list)
