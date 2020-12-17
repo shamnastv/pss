@@ -190,13 +190,12 @@ def main():
 
     max_k = 5
     alphas_list = []
-
     for k in range(max_k):
         alphas_list = train_init(args, alphas_list, k, device)
 
     alphas_list_new = []
     for k in range(max_k):
-        alphas_list_new.append(alphas_list[i])
+        alphas_list_new.append(alphas_list[k])
         alphas_list = train_final(args, alphas_list, k, device)
 
 
