@@ -133,7 +133,7 @@ def get_attention_mask_forerasing(dataset, alphas_list):
                 if entropy < max_entropy:
                     index = abs(alphas[i]).argmax()
                     masks[index] = 0.0  # erasing
-                    dataset[i]['wids'][index] = 0
+                    dataset[i]['wid'][index] = 0
 
         dataset[i]['mask'] = masks
 
