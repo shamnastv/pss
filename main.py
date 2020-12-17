@@ -203,6 +203,8 @@ def main():
         alphas_list_new.append(alphas_list[k])
         alphas_list = train_final(args, alphas_list, k, device)
 
+    print('=' * 150)
+
 
 if __name__ == '__main__':
     main()
