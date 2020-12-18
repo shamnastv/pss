@@ -16,7 +16,7 @@ class AbsolutePositionEmbedding(nn.Module):
     def forward(self, x, weight):
         if (self.size is None) or (self.mode == 'sum'):
             self.size = int(x.size(-1))
-        batch_size, seq_len = x.size()[0], x.size()[1]
+        # batch_size, seq_len = x.size()[0], x.size()[1]
         # weight = self.weight_matrix(pos_inx, batch_size, seq_len).to(self.device)
         # print(weight.shape)
         # print(x.shape)
@@ -86,6 +86,7 @@ class Model(nn.Module):
         self.fc1 = nn.Linear(4 * args.hidden_dim, 2 * args.hidden_dim)
         self.fc = nn.Linear(2 * args.hidden_dim, num_clasees)
         self.dropout = nn.Dropout(args.dropout)
+        self.linear2 = nn.Linear(2 * args.hidden_dim, 1)
 
     def forward(self, inputs, initial):
         feature_ids, aspect_ids, feature_lens, aspect_lens, position_weight, masks, target, a_mask, a_value\
@@ -105,8 +106,11 @@ class Model(nn.Module):
             aspect_mid = torch.cat((aspect_mid, v), dim=1).transpose(1, 2)
             aspect_mid = F.relu(self.fc1(aspect_mid).transpose(1, 2))
             aspect_mid = self.dropout(aspect_mid)
-            v = aspect_mid + v
-            v = self.position(v.transpose(1, 2), position_weight).transpose(1, 2)
+            t = torch.sigmoid(self.linear2(v.transpose(1, 2))).transpose(1, 2)
+            v = (1 - t) * aspect_mid + t * v
+            # v = self.position(v.transpose(1, 2), position_weight).transpose(1, 2)
+            v = position_weight.unsqueeze(2) * v.transpose(1, 2)
+            v = v.transpose(1, 2)
 
         v = v.transpose(1, 2)
         # z, (_, _) = self.lstm3(v, feature_lens)

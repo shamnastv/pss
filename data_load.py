@@ -29,35 +29,31 @@ def read(path):
                         end = '/0'
                         y = 2
 
-                    # Add the target word to words and target_words
                     words.append(t.strip(end))
                     target_words.append(t.strip(end))
-                    # left most and right most record the leftmost and rightmost positions of the target word,
-                    # respectively
+
                     if not flag:
                         flag = True
                         record['y'] = y
                         start_t = end_t = tokens.index(t)
                     else:
                         end_t += 1
-                # Not the target word, directly add words
                 else:
                     words.append(t)
-            # d stores the location information of this sentence
+
             for pos in range(len(tokens)):
                 if pos < start_t:
                     d.append(end_t - pos)
                 else:
                     d.append(pos - start_t)
-            # Original sentence, the whole sentence after removing the label, the target word
+
             record['sent'] = line.strip()
             record['words'] = words
             record['targets'] = target_words
-            # Sentence length, target word length
-            record['wc'] = len(words)  # word count
-            record['wct'] = len(target_words)  # target word count
-            # location information
-            record['dist'] = d  # relative distance
+            record['wc'] = len(words)
+            record['wct'] = len(target_words)
+
+            record['dist'] = d
             record['sid'] = rid
             record['beg'] = start_t
             record['end'] = end_t + 1
@@ -177,7 +173,7 @@ def get_attention_mask_test(dataset):
     for i in range(len(dataset)):
         masks = []
         for w in dataset[i]['dist']:
-            if w == -1:  # -1 is the padding part
+            if w == -1:
                 masks.append(0.0)
             else:
                 masks.append(1.0)
@@ -205,28 +201,35 @@ def load_data(dataset_name, alphas_list, erase=True):
 
 
 def get_dataset(dataset_name):
+
     pickle_file = './embeddings/%s_dump.pkl' % dataset_name
     if os.path.exists(pickle_file):
         return pickle.load(open(pickle_file, 'rb'))
 
     train_file = './dataset/' + dataset_name + '/train.txt'
     test_file = './dataset/' + dataset_name + '/test.txt'
+
     train_data = read(train_file)
     test_data = read(test_file)
+
     train_wc = [t['wc'] for t in train_data]
     test_wc = [t['wc'] for t in test_data]
     max_len = max(train_wc + test_wc)
+
     train_wc_t = [t['wct'] for t in train_data]
     test_wc_t = [t['wct'] for t in test_data]
     max_len_t = max(train_wc_t + test_wc_t)
+
     train_data = add_pos_weight(train_data, max_len)
     test_data = add_pos_weight(test_data, max_len)
+
     word_to_id, word_list = get_vocab(train_data + test_data)
     train_data = data_word_to_id(train_data, word_to_id, max_len, max_len_t)
     test_data = data_word_to_id(test_data, word_to_id, max_len, max_len_t)
     embeddings = get_embedding(word_to_id, dataset_name)
 
     data = embeddings, test_data, train_data, word_list, word_to_id
+
     pickle.dump(data, open(pickle_file, 'wb'))
 
     return embeddings, test_data, train_data, word_list, word_to_id

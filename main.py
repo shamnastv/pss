@@ -54,6 +54,7 @@ def train_init(args, alphas_list, k, device):
     alphas_to_save = None
     batch_size = args.batch_size
     for epoch in range(1, args.epochs + 1):
+        model.train()
         train_idx = np.random.permutation(train_size)
         loss_accum = 0
         for i in range(0, train_size, batch_size):
@@ -71,6 +72,7 @@ def train_init(args, alphas_list, k, device):
 
         print('epoch :', epoch, 'loss :', loss_accum, flush=True)
 
+        model.eval()
         outputs_train, alphas_train, targets_train = pass_data_iteratively(model, train_data, batch_size=128,
                                                                            initial=True)
         pred_train = outputs_train.max(1, keepdim=True)[1]
@@ -120,6 +122,7 @@ def train_final(args, alphas_list, k, device):
 
     batch_size = args.batch_size
     for epoch in range(1, args.epochs + 1):
+        model.train()
         train_idx = np.random.permutation(train_size)
         loss_accum = 0
         for i in range(0, train_size, batch_size):
@@ -138,6 +141,7 @@ def train_final(args, alphas_list, k, device):
             loss_accum += loss
         print('epoch :', epoch, 'loss :', loss_accum, flush=True)
 
+        model.eval()
         outputs_train, alphas_train, targets_train = pass_data_iteratively(model, train_data, batch_size=128,
                                                                            initial=True)
         pred_train = outputs_train.max(1, keepdim=True)[1]
