@@ -45,7 +45,7 @@ class Model(nn.Module):
         self.device = device
 
         self.word_embeddings = nn.Embedding(word_embeddings.shape[0], word_embeddings.shape[1], padding_idx=0)
-        self.word_embeddings.weight.data.copy_(torch.from_numpy(torch.from_numpy(word_embeddings).float()))
+        self.word_embeddings.weight.data.copy_(torch.from_numpy(word_embeddings).float())
         self.word_embeddings.weight.requires_grad = True
 
         lstm_dropout = 0
