@@ -88,9 +88,9 @@ class Model(nn.Module):
 
         v = v.transpose(1, 2)
         # z, (_, _) = self.lstm3(v, feature_lens)
-        # query = torch.max(e, dim=2)[0].unsqueeze(2)
-        hidden_fwd, hidden_bwd = e.chunk(2, 1)
-        query = torch.cat((hidden_fwd[:, :, -1], hidden_bwd[:, :, 0]), dim=1).unsqueeze(2)
+        query = torch.max(e, dim=2)[0].unsqueeze(2)
+        # hidden_fwd, hidden_bwd = e.chunk(2, 1)
+        # query = torch.cat((hidden_fwd[:, :, -1], hidden_bwd[:, :, 0]), dim=1).unsqueeze(2)
 
         alpha = torch.bmm(v, query)
         alpha.masked_fill_(masks.unsqueeze(2), -1e9)
