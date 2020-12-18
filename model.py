@@ -6,46 +6,15 @@ import torch.nn.functional as F
 from rnn import DynamicLSTM
 
 
-class AbsolutePositionEmbedding(nn.Module):
-    def __init__(self, device, size=None, mode='sum'):
-        self.device = device
-        self.size = size
-        self.mode = mode
-        super(AbsolutePositionEmbedding, self).__init__()
-
-    def forward(self, x, weight):
-        if (self.size is None) or (self.mode == 'sum'):
-            self.size = int(x.size(-1))
-        # batch_size, seq_len = x.size()[0], x.size()[1]
-        # weight = self.weight_matrix(pos_inx, batch_size, seq_len).to(self.device)
-        # print(weight.shape)
-        # print(x.shape)
-        x = weight.unsqueeze(2) * x
-        return x
-
-    def weight_matrix(self, pos_inx, batch_size, seq_len):
-        pos_inx = pos_inx.cpu().numpy()
-        weight = [[] for i in range(batch_size)]
-        for i in range(batch_size):
-            for j in range(pos_inx[i][1]):
-                relative_pos = pos_inx[i][1] - j
-                weight[i].append(1 - relative_pos / 40)
-            for j in range(pos_inx[i][1], seq_len):
-                relative_pos = j - pos_inx[i][0]
-                weight[i].append(1 - relative_pos / 40)
-        weight = torch.tensor(weight)
-        return weight
-
-
 def get_features(inputs, device, initial):
     feature_ids, aspect_ids, feature_lens, aspect_lens, position_weight, masks, target = [], [], [], [], [], [], []
     a_mask, a_value = [], []
     for d in inputs:
-        feature_ids.append(d['wid'])
-        aspect_ids.append(d['tid'])
-        feature_lens.append(d['wc'])
-        aspect_lens.append(d['wct'])
-        position_weight.append(d['pw'])
+        feature_ids.append(d['word_ids'])
+        aspect_ids.append(d['target_ids'])
+        feature_lens.append(d['word_count'])
+        aspect_lens.append(d['target_word_count'])
+        position_weight.append(d['position_weight'])
         masks.append(d['mask'])
         target.append(d['y'])
         if not initial:
@@ -81,8 +50,6 @@ class Model(nn.Module):
         self.lstm2 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
         self.lstm3 = DynamicLSTM(2 * args.hidden_dim, args.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
 
-        self.position = AbsolutePositionEmbedding(device)
-
         self.fc1 = nn.Linear(4 * args.hidden_dim, 2 * args.hidden_dim)
         self.fc = nn.Linear(2 * args.hidden_dim, num_clasees)
         self.dropout = nn.Dropout(args.dropout)
@@ -101,22 +68,23 @@ class Model(nn.Module):
         e = self.dropout(e.transpose(1, 2))
         for i in range(2):
             a = torch.bmm(e.transpose(1, 2), v)
-            a = F.softmax(a, 1)  # (aspect_len,context_len)
+            a = F.softmax(a, 1)
             aspect_mid = torch.bmm(e, a)
             aspect_mid = torch.cat((aspect_mid, v), dim=1).transpose(1, 2)
             aspect_mid = F.relu(self.fc1(aspect_mid).transpose(1, 2))
             aspect_mid = self.dropout(aspect_mid)
             t = torch.sigmoid(self.linear2(v.transpose(1, 2))).transpose(1, 2)
             v = (1 - t) * aspect_mid + t * v
-            # v = self.position(v.transpose(1, 2), position_weight).transpose(1, 2)
             v = position_weight.unsqueeze(2) * v.transpose(1, 2)
             v = v.transpose(1, 2)
 
         v = v.transpose(1, 2)
         # z, (_, _) = self.lstm3(v, feature_lens)
-        query = torch.max(e, dim=2)[0].unsqueeze(1)
+        # query = torch.max(e, dim=2)[0].unsqueeze(2)
+        hidden_fwd, hidden_bwd = e.chunk(2, 1)
+        query = torch.cat((hidden_fwd[:, :, -1], hidden_bwd[:, :, 0]), dim=1).unsqueeze(2)
 
-        alpha = torch.bmm(v, query.transpose(1, 2))
+        alpha = torch.bmm(v, query)
         alpha.masked_fill_(masks.unsqueeze(2), -1e9)
         alpha = F.softmax(alpha, 1)
         z = torch.bmm(alpha.transpose(1, 2), v)

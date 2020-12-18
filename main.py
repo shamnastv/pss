@@ -38,8 +38,8 @@ def main_init(args, alphas_list, k, device):
     num_clasees = 3
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, True)
     args.embed_dim = len(word_embeddings[1])
-    args.sent_len = len(dataset['train'][0]['wid'])
-    args.target_len = len(dataset['train'][0]['tid'])
+    args.sent_len = len(dataset['train'][0]['word_ids'])
+    args.target_len = len(dataset['train'][0]['target_ids'])
 
     train_data = dataset['train']
     test_data = dataset['test']
@@ -63,7 +63,7 @@ def main_init(args, alphas_list, k, device):
     print('=' * 100)
 
     alphas_list.append(alphas_to_save)
-    return alphas_list
+    return alphas_list, max_test_acc
 
 
 def test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save, max_test_acc, k):
@@ -114,8 +114,8 @@ def main_final(args, alphas_list, k, device):
     num_clasees = 3
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, False)
     args.embed_dim = len(word_embeddings[1])
-    args.sent_len = len(dataset['train'][0]['wid'])
-    args.target_len = len(dataset['train'][0]['tid'])
+    args.sent_len = len(dataset['train'][0]['word_ids'])
+    args.target_len = len(dataset['train'][0]['target_ids'])
 
     train_data = dataset['train']
     test_data = dataset['test']
@@ -137,7 +137,7 @@ def main_final(args, alphas_list, k, device):
     print('max test accuracy : ', max_test_acc)
     print('=' * 100)
 
-    return alphas_list
+    return alphas_list, max_test_acc
 
 
 def test_final(epoch, model, scheduler, train_data, test_data, max_test_acc, k):
@@ -212,13 +212,21 @@ def main():
 
     max_k = 5
     alphas_list = []
+    init_accuracies = []
     for k in range(max_k):
-        alphas_list = main_init(args, alphas_list, k, device)
+        alphas_list, max_test_acc = main_init(args, alphas_list, k, device)
+        init_accuracies.append(max_test_acc)
 
     alphas_list_new = []
+    final_accuracies = []
     for k in range(max_k):
         alphas_list_new.append(alphas_list[k])
-        alphas_list = main_final(args, alphas_list, k, device)
+        alphas_list_new, max_test_acc = main_final(args, alphas_list_new, k, device)
+        final_accuracies.append(max_test_acc)
+
+    print('=' * 150)
+    for i in range(max_k):
+        print('k :', i, '\taccuracy int :', init_accuracies[i], '\taccuracy final :', final_accuracies[i])
 
     print('=' * 150)
 

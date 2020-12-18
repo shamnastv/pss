@@ -8,7 +8,7 @@ from util import get_embedding
 def read(path):
     data = []
     with open(path, encoding='utf-8') as f:
-        rid = 0
+        # rid = 0
         for line in f:
             record = {}
             tokens = line.strip().split()
@@ -47,17 +47,17 @@ def read(path):
                 else:
                     d.append(pos - start_t)
 
-            record['sent'] = line.strip()
+            # record['sent'] = line.strip()
             record['words'] = words
             record['targets'] = target_words
-            record['wc'] = len(words)
-            record['wct'] = len(target_words)
+            record['word_count'] = len(words)
+            record['target_word_count'] = len(target_words)
 
-            record['dist'] = d
-            record['sid'] = rid
-            record['beg'] = start_t
-            record['end'] = end_t + 1
-            rid += 1
+            record['distance'] = d
+            # record['sid'] = rid
+            # record['beg'] = start_t
+            # record['end'] = end_t + 1
+            # rid += 1
             data.append(record)
     return data
 
@@ -65,14 +65,14 @@ def read(path):
 def add_pos_weight(data, max_len):
     max_t = 40
     for i in range(len(data)):
-        data[i]['pw'] = []
-        pad = max_len - len(data[i]['dist'])
-        data[i]['dist'] = data[i]['dist'] + pad * [-1]
-        for d in data[i]['dist']:
+        data[i]['position_weight'] = []
+        pad = max_len - len(data[i]['distance'])
+        data[i]['distance'] = data[i]['distance'] + pad * [-1]
+        for d in data[i]['distance']:
             if d == -1 or d > max_t:
-                data[i]['pw'].append(0.0)
+                data[i]['position_weight'].append(0.0)
             else:
-                data[i]['pw'].append(1 - float(d) / max_t)
+                data[i]['position_weight'].append(1 - float(d) / max_t)
 
     return data
 
@@ -101,14 +101,14 @@ def data_word_to_id(data, word_to_id, max_len, max_len_t):
             word_list.append(word_to_id[word])
         pad = max_len - len(word_list)
         word_list += pad * [0]
-        data[i]['wid'] = word_list
+        data[i]['word_ids'] = word_list
 
         word_list = []
         for word in data[i]['targets']:
             word_list.append(word_to_id[word])
         pad = max_len_t - len(word_list)
         word_list += pad * [0]
-        data[i]['tid'] = word_list
+        data[i]['target_ids'] = word_list
 
     return data
 
@@ -118,7 +118,7 @@ def get_attention_mask_init(dataset, alphas_list):
 
     for i in range(len(dataset)):
         masks = []
-        for w in dataset[i]['dist']:
+        for w in dataset[i]['distance']:
             if w == -1:  # -1 is the padding part
                 masks.append(0.0)
             else:
@@ -131,7 +131,7 @@ def get_attention_mask_init(dataset, alphas_list):
                 if entropy < max_entropy:
                     index = abs(alphas[i]).argmax()
                     masks[index] = 0.0
-                    dataset[i]['wid'][index] = 0
+                    dataset[i]['word_ids'][index] = 0
 
         dataset[i]['mask'] = masks
 
@@ -145,8 +145,8 @@ def get_attention_mask_final(dataset, alphas_list):
         masks = []
         amasks = []
         avalues = []
-        for w in dataset[i]['dist']:
-            if w == -1:
+        for d in dataset[i]['distance']:
+            if d == -1:
                 masks.append(0.0)
             else:
                 masks.append(1.0)
@@ -172,8 +172,8 @@ def get_attention_mask_final(dataset, alphas_list):
 def get_attention_mask_test(dataset):
     for i in range(len(dataset)):
         masks = []
-        for w in dataset[i]['dist']:
-            if w == -1:
+        for d in dataset[i]['distance']:
+            if d == -1:
                 masks.append(0.0)
             else:
                 masks.append(1.0)
@@ -212,12 +212,12 @@ def get_dataset(dataset_name):
     train_data = read(train_file)
     test_data = read(test_file)
 
-    train_wc = [t['wc'] for t in train_data]
-    test_wc = [t['wc'] for t in test_data]
+    train_wc = [t['word_count'] for t in train_data]
+    test_wc = [t['word_count'] for t in test_data]
     max_len = max(train_wc + test_wc)
 
-    train_wc_t = [t['wct'] for t in train_data]
-    test_wc_t = [t['wct'] for t in test_data]
+    train_wc_t = [t['target_word_count'] for t in train_data]
+    test_wc_t = [t['target_word_count'] for t in test_data]
     max_len_t = max(train_wc_t + test_wc_t)
 
     train_data = add_pos_weight(train_data, max_len)
