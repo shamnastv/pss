@@ -197,8 +197,8 @@ def main():
 
     args = parser.parse_args()
 
-    if args.dataset_name == '14semeval_rest' or args.ds_name == '14semeval_rest_val':
-        args.beta = 0.5
+    # if args.dataset_name == '14semeval_rest' or args.ds_name == '14semeval_rest_val':
+    #     args.beta = 0.5
 
     print(args, flush=True)
 
