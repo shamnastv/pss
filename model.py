@@ -62,10 +62,15 @@ class Model(nn.Module):
         self.lstm3 = DynamicLSTM(2 * args.hidden_dim, args.hidden_dim, num_layers=args.num_layers,
                                  batch_first=True, bidirectional=True, dropout=lstm_dropout)
 
-        self.fc1 = nn.Linear(4 * args.hidden_dim, 2 * args.hidden_dim)
-        self.fc = nn.Linear(2 * args.hidden_dim, num_clasees)
+        self.linear1 = nn.ModuleList()
+        self.linear2 = nn.ModuleList()
+        for i in range(2):
+            self.linear1.append(nn.Linear(4 * args.hidden_dim, 2 * args.hidden_dim))
+            self.linear2.append(nn.Linear(2 * args.hidden_dim, 1))
+        # self.fc1 = nn.Linear(4 * args.hidden_dim, 2 * args.hidden_dim)
+        self.classifier = nn.Linear(2 * args.hidden_dim, num_clasees)
         self.dropout = nn.Dropout(args.dropout)
-        self.linear2 = nn.Linear(2 * args.hidden_dim, 1)
+        # self.linear2 = nn.Linear(2 * args.hidden_dim, 1)
 
     def forward(self, inputs, initial):
         feature_ids, aspect_ids, feature_lens, aspect_lens, position_weight, masks, target, a_mask, a_value\
@@ -83,9 +88,9 @@ class Model(nn.Module):
             a = F.softmax(a, 1)
             aspect_mid = torch.bmm(e, a)
             aspect_mid = torch.cat((aspect_mid, v), dim=1).transpose(1, 2)
-            aspect_mid = F.relu(self.fc1(aspect_mid).transpose(1, 2))
+            aspect_mid = F.relu(self.linear1[i](aspect_mid).transpose(1, 2))
             aspect_mid = self.dropout(aspect_mid)
-            t = torch.sigmoid(self.linear2(v.transpose(1, 2))).transpose(1, 2)
+            t = torch.sigmoid(self.linear2[i](v.transpose(1, 2))).transpose(1, 2)
             v = (1 - t) * aspect_mid + t * v
             v = position_weight.unsqueeze(2) * v.transpose(1, 2)
             v = v.transpose(1, 2)
@@ -102,5 +107,5 @@ class Model(nn.Module):
         alpha.masked_fill_(masks.unsqueeze(2), -1e9)
         alpha = F.softmax(alpha, 1)
         z = torch.bmm(alpha.transpose(1, 2), v)
-        z = self.fc(z.squeeze(1))
+        z = self.classifier(z.squeeze(1))
         return z, alpha.squeeze(2), target, a_mask, a_value

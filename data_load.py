@@ -228,7 +228,7 @@ def get_dataset(dataset_name):
     word_to_id, word_list = get_vocab(train_data + test_data)
     train_data = data_word_to_id(train_data, word_to_id, max_len, max_len_t)
     test_data = data_word_to_id(test_data, word_to_id, max_len, max_len_t)
-    embeddings = get_embedding(word_to_id, dataset_name)
+    embeddings = get_embedding(word_to_id)
 
     data = embeddings, test_data, train_data, word_list, word_to_id
 
