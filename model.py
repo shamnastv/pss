@@ -28,11 +28,11 @@ def get_features(inputs, device, initial):
     aspect_lens = torch.tensor(aspect_lens).long().to(device)
     position_weight = torch.tensor(position_weight).float().to(device)
     masks = torch.tensor(masks).float().to(device)
-    masks = masks.eq(0)
+    # masks = masks.eq(0)
     target = torch.tensor(target).long().to(device)
 
     target_masks = torch.tensor(target_masks).float().to(device)
-    target_masks = target_masks.eq(0)
+    # target_masks = target_masks.eq(0)
     if not initial:
         a_mask = torch.tensor(a_mask).float().to(device)
         a_value = torch.tensor(a_value).float().to(device)
@@ -81,30 +81,43 @@ class Model(nn.Module):
         v, (_, _) = self.lstm1(features, feature_lens)
         e, (_, _) = self.lstm2(aspects, aspect_lens)
 
-        v = self.dropout(v.transpose(1, 2))
-        e = self.dropout(e.transpose(1, 2))
-        for i in range(2):
-            a = torch.bmm(e.transpose(1, 2), v)
-            a = F.softmax(a, 1)
-            aspect_mid = torch.bmm(e, a)
-            aspect_mid = torch.cat((aspect_mid, v), dim=1).transpose(1, 2)
-            aspect_mid = F.relu(self.linear1[i](aspect_mid).transpose(1, 2))
-            aspect_mid = self.dropout(aspect_mid)
-            t = torch.sigmoid(self.linear2[i](v.transpose(1, 2))).transpose(1, 2)
-            v = (1 - t) * aspect_mid + t * v
-            v = position_weight.unsqueeze(2) * v.transpose(1, 2)
-            v = v.transpose(1, 2)
+        # v = self.dropout(v.transpose(1, 2))
+        # e = self.dropout(e.transpose(1, 2))
+        # for i in range(2):
+        #     a = torch.bmm(e.transpose(1, 2), v)
+        #     a = F.softmax(a, 1)
+        #     aspect_mid = torch.bmm(e, a)
+        #     aspect_mid = torch.cat((aspect_mid, v), dim=1).transpose(1, 2)
+        #     aspect_mid = F.leaky_relu(self.linear1[i](aspect_mid).transpose(1, 2))
+        #     aspect_mid = self.dropout(aspect_mid)
+        #     t = torch.sigmoid(self.linear2[i](v.transpose(1, 2))).transpose(1, 2)
+        #     v = (1 - t) * aspect_mid + t * v
+        #     v = position_weight.unsqueeze(2) * v.transpose(1, 2)
+        #     v = v.transpose(1, 2)
 
-        target_masks = target_masks.unsqueeze(1).repeat(1, e.shape[1], 1)
-        v = v.transpose(1, 2)
+        v = self.dropout(v)
+        e = self.dropout(e)
+        for i in range(2):
+            a = torch.bmm(v, e.transpose(1, 2))
+            a = a.masked_fill(torch.bmm(masks.unsqueeze(2), target_masks.unsqueeze(1)).eq(0), -1e9)
+            a = F.softmax(a, 2)
+            aspect_mid = torch.bmm(a, e)
+            aspect_mid = torch.cat((aspect_mid, v), dim=2)
+            aspect_mid = F.leaky_relu(self.linear1[i](aspect_mid))
+            aspect_mid = self.dropout(aspect_mid)
+            t = torch.sigmoid(self.linear2[i](v))
+            v = (1 - t) * aspect_mid + t * v
+            v = position_weight.unsqueeze(2) * v
+
+        target_masks = target_masks.eq(0).unsqueeze(2).repeat(1, 1, e.shape[2])
         # z, (_, _) = self.lstm3(v, feature_lens)
 
-        query = torch.max(e.masked_fill(target_masks, -1e9), dim=2)[0].unsqueeze(2)
+        query = torch.max(e.masked_fill(target_masks, -1e9), dim=1)[0].unsqueeze(1)
         # hidden_fwd, hidden_bwd = e.chunk(2, 1)
-        # query = torch.cat((hidden_fwd[:, :, -1], hidden_bwd[:, :, 0]), dim=1).unsqueeze(2)
+        # query = torch.cat((hidden_fwd[:, -1, :], hidden_bwd[:, 0, :]), dim=2).unsqueeze(1)
 
-        alpha = torch.bmm(v, query)
-        alpha.masked_fill_(masks.unsqueeze(2), -1e9)
+        alpha = torch.bmm(v, query.transpose(1, 2))
+        alpha.masked_fill_(masks.eq(0).unsqueeze(2), -1e9)
         alpha = F.softmax(alpha, 1)
         z = torch.bmm(alpha.transpose(1, 2), v)
         z = self.classifier(z.squeeze(1))
