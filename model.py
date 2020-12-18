@@ -8,7 +8,7 @@ from rnn import DynamicLSTM
 
 def get_features(inputs, device, initial):
     feature_ids, aspect_ids, feature_lens, aspect_lens, position_weight, masks, target = [], [], [], [], [], [], []
-    a_mask, a_value = [], []
+    a_mask, a_value, target_masks = [], [], []
     for d in inputs:
         feature_ids.append(d['word_ids'])
         aspect_ids.append(d['target_ids'])
@@ -17,6 +17,7 @@ def get_features(inputs, device, initial):
         position_weight.append(d['position_weight'])
         masks.append(d['mask'])
         target.append(d['y'])
+        target_masks.append(d['target_mask'])
         if not initial:
             a_mask.append(d['amask'])
             a_value.append(d['avalue'])
@@ -29,6 +30,9 @@ def get_features(inputs, device, initial):
     masks = torch.tensor(masks).float().to(device)
     masks = masks.eq(0)
     target = torch.tensor(target).long().to(device)
+
+    target_masks = torch.tensor(target_masks).float().to(device)
+    target_masks = target_masks.eq(0)
     if not initial:
         a_mask = torch.tensor(a_mask).float().to(device)
         a_value = torch.tensor(a_value).float().to(device)
@@ -36,7 +40,7 @@ def get_features(inputs, device, initial):
         a_mask = None
         a_value = None
 
-    return feature_ids, aspect_ids, feature_lens, aspect_lens, position_weight, masks, target, a_mask, a_value
+    return feature_ids, aspect_ids, feature_lens, aspect_lens, position_weight, masks, target, a_mask, a_value, target_masks
 
 
 class Model(nn.Module):
@@ -65,7 +69,7 @@ class Model(nn.Module):
 
     def forward(self, inputs, initial):
         feature_ids, aspect_ids, feature_lens, aspect_lens, position_weight, masks, target, a_mask, a_value\
-            = get_features(inputs, self.device, initial)
+            , target_masks = get_features(inputs, self.device, initial)
 
         features = self.word_embeddings(feature_ids)
         aspects = self.word_embeddings(aspect_ids)
@@ -86,9 +90,10 @@ class Model(nn.Module):
             v = position_weight.unsqueeze(2) * v.transpose(1, 2)
             v = v.transpose(1, 2)
 
+        target_masks = target_masks.unsqueeze(1).repeat(1, e.shape[1], 1)
         v = v.transpose(1, 2)
         # z, (_, _) = self.lstm3(v, feature_lens)
-        query = torch.max(e, dim=2)[0].unsqueeze(2)
+        query = torch.max(e.masked_fill_(target_masks, -1e9), dim=2)[0].unsqueeze(2)
         # hidden_fwd, hidden_bwd = e.chunk(2, 1)
         # query = torch.cat((hidden_fwd[:, :, -1], hidden_bwd[:, :, 0]), dim=1).unsqueeze(2)
 
