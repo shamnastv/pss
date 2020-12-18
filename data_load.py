@@ -107,8 +107,8 @@ def data_word_to_id(data, word_to_id, max_len, max_len_t):
         for word in data[i]['targets']:
             word_list.append(word_to_id[word])
         pad = max_len_t - len(word_list)
-        word_list += pad * [0]
         target_mask = [1] * len(word_list) + pad * [0]
+        word_list += pad * [0]
         data[i]['target_ids'] = word_list
         data[i]['target_mask'] = target_mask
 
