@@ -6,4 +6,4 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=cl1_48h-1G
 
-python3 main.py --hidden_dim 50 --lr .0008 --batch_size 32 --dropout .3 --num_layers 1
+python3 main.py --hidden_dim 50 --lr .0008 --batch_size 32 --dropout .3 --num_layers 1 --beta .5
