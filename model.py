@@ -44,7 +44,8 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.device = device
 
-        self.word_embeddings = nn.Embedding.from_pretrained(torch.from_numpy(word_embeddings).float().to(device))
+        self.word_embeddings = nn.Embedding.from_pretrained(torch.from_numpy(word_embeddings).float().to(device),
+                                                            freeze=False)
 
         self.lstm1 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
         self.lstm2 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)

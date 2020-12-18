@@ -113,9 +113,9 @@ def main_final(args, alphas_list, k, device):
     max_test_acc = 0
     num_clasees = 3
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, False)
-    args.embed_dim = len(word_embeddings[1])
-    args.sent_len = len(dataset['train'][0]['word_ids'])
-    args.target_len = len(dataset['train'][0]['target_ids'])
+    # args.embed_dim = len(word_embeddings[1])
+    # args.sent_len = len(dataset['train'][0]['word_ids'])
+    # args.target_len = len(dataset['train'][0]['target_ids'])
 
     train_data = dataset['train']
     test_data = dataset['test']
@@ -225,6 +225,7 @@ def main():
         final_accuracies.append(max_test_acc)
 
     print('=' * 150)
+    print(args)
     for i in range(max_k):
         print('k :', i, '\taccuracy int :', init_accuracies[i], '\taccuracy final :', final_accuracies[i])
 
