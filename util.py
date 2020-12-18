@@ -24,4 +24,5 @@ def get_embedding(word_to_id, dataset):
         # pickle.dump(embeddings, open(pickle_file, 'wb'))  # Storage, easy to read next time
     else:
         embeddings = pickle.load(open(pickle_file, 'rb'))
+    embeddings[0] = np.zeros(dim, dtype='float32')
     return embeddings

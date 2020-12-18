@@ -104,7 +104,6 @@ def train_init(args, alphas_list, k, device):
 def train_final(args, alphas_list, k, device):
     max_test_acc = 0
     num_clasees = 3
-    # alpha_files[k] = 'alpha-' + str(k)
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, False)
     args.embed_dim = len(word_embeddings[1])
     args.sent_len = len(dataset['train'][0]['wid'])
@@ -153,7 +152,7 @@ def train_final(args, alphas_list, k, device):
         if test_acc > max_test_acc:
             max_test_acc = test_acc
 
-        print('initial', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
+        print('final', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
 
         print('')
 

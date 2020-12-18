@@ -14,7 +14,7 @@ def read(path):
             tokens = line.strip().split()
             words, target_words = [], []
             d = []
-            find_label = False
+            flag = False
             for t in tokens:
                 if '/p' in t or '/n' in t or '/0' in t:
                     end = 'xx'
@@ -34,21 +34,21 @@ def read(path):
                     target_words.append(t.strip(end))
                     # left most and right most record the leftmost and rightmost positions of the target word,
                     # respectively
-                    if not find_label:
-                        find_label = True
+                    if not flag:
+                        flag = True
                         record['y'] = y
-                        left_most = right_most = tokens.index(t)
+                        start_t = end_t = tokens.index(t)
                     else:
-                        right_most += 1
+                        end_t += 1
                 # Not the target word, directly add words
                 else:
                     words.append(t)
             # d stores the location information of this sentence
             for pos in range(len(tokens)):
-                if pos < left_most:
-                    d.append(right_most - pos)
+                if pos < start_t:
+                    d.append(end_t - pos)
                 else:
-                    d.append(pos - left_most)
+                    d.append(pos - start_t)
             # Original sentence, the whole sentence after removing the label, the target word
             record['sent'] = line.strip()
             record['words'] = words
@@ -59,8 +59,8 @@ def read(path):
             # location information
             record['dist'] = d  # relative distance
             record['sid'] = rid
-            record['beg'] = left_most
-            record['end'] = right_most + 1
+            record['beg'] = start_t
+            record['end'] = end_t + 1
             rid += 1
             data.append(record)
     return data
@@ -91,7 +91,7 @@ def get_vocab(data):
         for word in d['targets']:
             word_set.add(word)
 
-    word_list = list(word_set)
+    word_list = ['<pad>'] + list(word_set)
     for i, word in enumerate(word_list):
         word_to_id[word] = i
 
@@ -117,7 +117,7 @@ def data_word_to_id(data, word_to_id, max_len, max_len_t):
     return data
 
 
-def get_attention_mask_forerasing(dataset, alphas_list):
+def get_attention_mask_init(dataset, alphas_list):
     max_entropy = 3.0
 
     for i in range(len(dataset)):
@@ -134,7 +134,7 @@ def get_attention_mask_forerasing(dataset, alphas_list):
                 entropy = - np.sum(np.log2(abs(alpha)) * abs(alpha))
                 if entropy < max_entropy:
                     index = abs(alphas[i]).argmax()
-                    masks[index] = 0.0  # erasing
+                    masks[index] = 0.0
                     dataset[i]['wid'][index] = 0
 
         dataset[i]['mask'] = masks
@@ -150,7 +150,7 @@ def get_attention_mask_final(dataset, alphas_list):
         amasks = []
         avalues = []
         for w in dataset[i]['dist']:
-            if w == -1:  # -1 is the padding part
+            if w == -1:
                 masks.append(0.0)
             else:
                 masks.append(1.0)
@@ -163,7 +163,7 @@ def get_attention_mask_final(dataset, alphas_list):
                 entropy = - np.sum(np.log2(abs(alpha)) * abs(alpha))
                 if entropy < max_entropy:
                     index = abs(alphas[i]).argmax()
-                    amasks[index] = 1.0  # erasing
+                    amasks[index] = 1.0
                     if alphas[i][index] > 0:
                         avalues[index] = 1.0
         dataset[i]['mask'] = masks
@@ -196,7 +196,7 @@ def load_data(dataset_name, alphas_list, erase=True):
     #         alphas_list.append(None)
 
     if erase:
-        train_data = get_attention_mask_forerasing(dataset=train_data, alphas_list=alphas_list)
+        train_data = get_attention_mask_init(dataset=train_data, alphas_list=alphas_list)
     else:
         train_data = get_attention_mask_final(dataset=train_data, alphas_list=alphas_list)
     test_data = get_attention_mask_test(dataset=test_data)
