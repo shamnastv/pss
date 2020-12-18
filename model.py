@@ -45,11 +45,14 @@ class Model(nn.Module):
         self.device = device
 
         self.word_embeddings = nn.Embedding.from_pretrained(torch.from_numpy(word_embeddings).float().to(device),
-                                                            freeze=False)
+                                                            freeze=False, padding_idx=0)
 
-        self.lstm1 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
-        self.lstm2 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
-        self.lstm3 = DynamicLSTM(2 * args.hidden_dim, args.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
+        self.lstm1 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=args.num_layers,
+                                 batch_first=True, bidirectional=True)
+        self.lstm2 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=args.num_layers,
+                                 batch_first=True, bidirectional=True)
+        self.lstm3 = DynamicLSTM(2 * args.hidden_dim, args.hidden_dim, num_layers=args.num_layers,
+                                 batch_first=True, bidirectional=True)
 
         self.fc1 = nn.Linear(4 * args.hidden_dim, 2 * args.hidden_dim)
         self.fc = nn.Linear(2 * args.hidden_dim, num_clasees)
