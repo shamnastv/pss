@@ -93,7 +93,8 @@ class Model(nn.Module):
         target_masks = target_masks.unsqueeze(1).repeat(1, e.shape[1], 1)
         v = v.transpose(1, 2)
         # z, (_, _) = self.lstm3(v, feature_lens)
-        query = torch.max(e.masked_fill_(target_masks, -1e9), dim=2)[0].unsqueeze(2)
+        e.masked_fill_(target_masks, -1e9)
+        query = torch.max(e, dim=2)[0].unsqueeze(2)
         # hidden_fwd, hidden_bwd = e.chunk(2, 1)
         # query = torch.cat((hidden_fwd[:, :, -1], hidden_bwd[:, :, 0]), dim=1).unsqueeze(2)
 
