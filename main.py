@@ -11,7 +11,6 @@ from sklearn.metrics import f1_score
 from data_load import load_data
 from model import Model
 
-
 criterion = nn.CrossEntropyLoss()
 mse_loss = nn.MSELoss()
 
@@ -23,7 +22,7 @@ def pass_data_iteratively(model, x, initial, batch_size=128):
     total_size = len(x)
     idx = np.arange(total_size)
     for i in range(0, total_size, batch_size):
-        idx_tmp = idx[i: i+batch_size]
+        idx_tmp = idx[i: i + batch_size]
 
         with torch.no_grad():
             output, alpha, target, a_mask, a_value = model([x[i] for i in idx_tmp], initial)
@@ -36,6 +35,7 @@ def pass_data_iteratively(model, x, initial, batch_size=128):
 
 def main_init(args, alphas_list, k, device):
     max_test_acc = 0
+    max_f1 = 0
     num_clasees = 3
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, True)
     args.embed_dim = len(word_embeddings[1])
@@ -57,17 +57,17 @@ def main_init(args, alphas_list, k, device):
     for epoch in range(1, args.epochs + 1):
         train_init(epoch, model, optimizer, train_data, train_size, batch_size)
 
-        alphas_to_save, max_test_acc = test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save,
-                                                 max_test_acc, k)
+        alphas_to_save, max_test_acc, max_f1 = test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save,
+                                                         max_test_acc, max_f1, k)
         print('')
-    print('max test accuracy : ', max_test_acc)
+    print('max test accuracy : ', max_test_acc, 'f1 :', max_f1)
     print('=' * 100)
 
     alphas_list.append(alphas_to_save)
-    return alphas_list, max_test_acc
+    return alphas_list, max_test_acc, max_f1
 
 
-def test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save, max_test_acc, k):
+def test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save, max_test_acc, max_f1, k):
     model.eval()
     outputs_train, alphas_train, targets_train = pass_data_iteratively(model, train_data, batch_size=128,
                                                                        initial=True)
@@ -86,6 +86,7 @@ def test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save, ma
 
     if test_acc > max_test_acc:
         max_test_acc = test_acc
+        max_f1 = test_f1
         pred_train = pred_train.view_as(targets_train)
         alphas_to_save = alphas_train.detach().cpu().numpy()
         for ind in range(len(pred_train)):
@@ -95,7 +96,7 @@ def test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save, ma
         scheduler.step()
     print('initial', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
     print('initial', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :', test_f1, flush=True)
-    return alphas_to_save, max_test_acc
+    return alphas_to_save, max_test_acc, max_f1
 
 
 def train_init(epoch, model, optimizer, train_data, train_size, batch_size):
@@ -143,10 +144,10 @@ def main_final(args, alphas_list, k, device):
 
         print('')
 
-    print('max test accuracy : ', max_test_acc)
+    print('max test accuracy : ', max_test_acc, 'f1 :', max_f1)
     print('=' * 100)
 
-    return alphas_list, max_test_acc
+    return alphas_list, max_test_acc, max_f1
 
 
 def test_final(epoch, model, scheduler, train_data, test_data, max_test_acc, max_f1, k):
@@ -231,21 +232,26 @@ def main():
     max_k = 5
     alphas_list = []
     init_accuracies = []
+    init_f1 = []
     for k in range(max_k):
-        alphas_list, max_test_acc = main_init(args, alphas_list, k, device)
+        alphas_list, max_test_acc, max_f1 = main_init(args, alphas_list, k, device)
         init_accuracies.append(max_test_acc)
+        init_f1.append(max_f1)
 
     alphas_list_new = []
     final_accuracies = []
+    final_f1 = []
     for k in range(max_k):
         alphas_list_new.append(alphas_list[k])
-        alphas_list_new, max_test_acc = main_final(args, alphas_list_new, k, device)
+        alphas_list_new, max_test_acc, max_f1 = main_final(args, alphas_list_new, k, device)
         final_accuracies.append(max_test_acc)
+        final_f1.append(max_f1)
 
     print('=' * 150)
     print(args)
     for i in range(max_k):
-        print('k :', i, '\taccuracy int :', init_accuracies[i], '\taccuracy final :', final_accuracies[i])
+        print('k :', i, '\taccuracy int :', init_accuracies[i], '\tf1 init :', init_f1[i],
+              '\taccuracy final :', final_accuracies[i], '\tf1 final :', final_f1[i])
 
     print('=' * 150)
 
