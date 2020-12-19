@@ -170,7 +170,7 @@ def test_final(epoch, model, scheduler, train_data, test_data, max_test_acc, max
     else:
         scheduler.step()
     print('final', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
-    print('initial', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :', test_f1, flush=True)
+    print('final', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :', test_f1, flush=True)
 
     return max_test_acc, max_f1
 
