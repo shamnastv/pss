@@ -6,6 +6,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.optim as optim
+from sklearn.metrics import f1_score
 
 from data_load import load_data
 from model import Model
@@ -73,10 +74,16 @@ def test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save, ma
     pred_train = outputs_train.max(1, keepdim=True)[1]
     correct = pred_train.eq(targets_train.view_as(pred_train)).sum().cpu().item()
     train_acc = correct / float(len(targets_train))
+    pred_train_np, targets_train_np = pred_train.detach().cpu().numpy(), targets_train.detach().cpu().numpy()
+    train_f1 = f1_score(targets_train_np, pred_train_np, average='macro')
+
     outputs_test, alpha_test, targets_test = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
     pred_test = outputs_test.max(1, keepdim=True)[1]
     correct = pred_test.eq(targets_test.view_as(pred_test)).sum().cpu().item()
     test_acc = correct / float(len(targets_test))
+    pred_test_np, targets_test_np = pred_test.detach().cpu().numpy(), targets_test.detach().cpu().numpy()
+    test_f1 = f1_score(targets_test_np, pred_test_np, average='macro')
+
     if test_acc > max_test_acc:
         max_test_acc = test_acc
         pred_train = pred_train.view_as(targets_train)
@@ -87,6 +94,7 @@ def test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save, ma
     else:
         scheduler.step()
     print('initial', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
+    print('initial', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :', test_f1, flush=True)
     return alphas_to_save, max_test_acc
 
 
@@ -111,6 +119,7 @@ def train_init(epoch, model, optimizer, train_data, train_size, batch_size):
 
 def main_final(args, alphas_list, k, device):
     max_test_acc = 0
+    max_f1 = 0
     num_clasees = 3
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, False)
     # args.embed_dim = len(word_embeddings[1])
@@ -130,7 +139,7 @@ def main_final(args, alphas_list, k, device):
     for epoch in range(1, args.epochs + 1):
         train_final(epoch, args, model, optimizer, train_data, train_size, batch_size)
 
-        max_test_acc = test_final(epoch, model, scheduler, train_data, test_data, max_test_acc, k)
+        max_test_acc, max_f1 = test_final(epoch, model, scheduler, train_data, test_data, max_test_acc, max_f1, k)
 
         print('')
 
@@ -140,23 +149,32 @@ def main_final(args, alphas_list, k, device):
     return alphas_list, max_test_acc
 
 
-def test_final(epoch, model, scheduler, train_data, test_data, max_test_acc, k):
+def test_final(epoch, model, scheduler, train_data, test_data, max_test_acc, max_f1, k):
     model.eval()
     outputs_train, alphas_train, targets_train = pass_data_iteratively(model, train_data, batch_size=128,
                                                                        initial=True)
     pred_train = outputs_train.max(1, keepdim=True)[1]
     correct = pred_train.eq(targets_train.view_as(pred_train)).sum().cpu().item()
     train_acc = correct / float(len(targets_train))
+    pred_train_np, targets_train_np = pred_train.detach().cpu().numpy(), targets_train.detach().cpu().numpy()
+    train_f1 = f1_score(targets_train_np, pred_train_np, average='macro')
+
     outputs_test, alpha_test, targets_test = pass_data_iteratively(model, test_data, batch_size=128, initial=True)
     pred_test = outputs_test.max(1, keepdim=True)[1]
     correct = pred_test.eq(targets_test.view_as(pred_test)).sum().cpu().item()
     test_acc = correct / float(len(targets_test))
+    pred_test_np, targets_test_np = pred_test.detach().cpu().numpy(), targets_test.detach().cpu().numpy()
+    test_f1 = f1_score(targets_test_np, pred_test_np, average='macro')
+
     if test_acc > max_test_acc:
         max_test_acc = test_acc
+        max_f1 = test_f1
     else:
         scheduler.step()
     print('final', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
-    return max_test_acc
+    print('initial', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :', test_f1, flush=True)
+
+    return max_test_acc, max_f1
 
 
 def train_final(epoch, args, model, optimizer, train_data, train_size, batch_size):
