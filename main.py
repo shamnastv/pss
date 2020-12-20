@@ -45,7 +45,6 @@ def main_init(args, alphas_list, k, device):
     test_data = dataset['test']
     train_size = len(train_data)
 
-    # alpha_files[k] = 'alpha-' + str(k)
     model = Model(args, num_clasees, word_embeddings, device).to(device)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     # optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=.9)
@@ -123,9 +122,6 @@ def main_final(args, alphas_list, k, device):
     max_f1 = 0
     num_clasees = 3
     dataset, word_to_id, word_list, word_embeddings = load_data(args.dataset_name, alphas_list, False)
-    # args.embed_dim = len(word_embeddings[1])
-    # args.sent_len = len(dataset['train'][0]['word_ids'])
-    # args.target_len = len(dataset['train'][0]['target_ids'])
 
     train_data = dataset['train']
     test_data = dataset['test']
@@ -217,9 +213,6 @@ def main():
     parser.add_argument("--rnn_type", type=str, default="LSTM", help="lstm or gru")
 
     args = parser.parse_args()
-
-    # if args.dataset_name == '14semeval_rest' or args.ds_name == '14semeval_rest_val':
-    #     args.beta = 0.5
 
     print(args, flush=True)
 

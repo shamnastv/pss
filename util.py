@@ -1,5 +1,3 @@
-import os
-import pickle
 import numpy as np
 
 
@@ -12,7 +10,7 @@ def get_embedding(word_to_id):
         for line in fp:
             elements = line.strip().split()
             word = elements[0]
-            if word in word_to_id:  # If the word is in the vocabulary, use the pre-training result
+            if word in word_to_id:
                 try:
                     embeddings[word_to_id[word]] = [float(v) for v in elements[1:]]
                 except ValueError:

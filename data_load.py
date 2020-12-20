@@ -8,7 +8,6 @@ from util import get_embedding
 def read(path):
     data = []
     with open(path, encoding='utf-8') as f:
-        # rid = 0
         for line in f:
             record = {}
             tokens = line.strip().split()
@@ -47,17 +46,11 @@ def read(path):
                 else:
                     d.append(pos - start_t)
 
-            # record['sent'] = line.strip()
             record['words'] = words
             record['targets'] = target_words
             record['word_count'] = len(words)
             record['target_word_count'] = len(target_words)
-
             record['distance'] = d
-            # record['sid'] = rid
-            # record['beg'] = start_t
-            # record['end'] = end_t + 1
-            # rid += 1
             data.append(record)
     return data
 
@@ -189,13 +182,6 @@ def get_attention_mask_test(dataset):
 
 def load_data(dataset_name, alphas_list, erase=True):
     embeddings, test_data, train_data, word_list, word_to_id = get_dataset(dataset_name)
-
-    # alphas_list = []
-    # for i in range(len(alpha_files)):
-    #     if alpha_files[i] is not None:
-    #         alphas_list.append(np.loadtxt(alpha_files[i]))
-    #     else:
-    #         alphas_list.append(None)
 
     if erase:
         train_data = get_attention_mask_init(dataset=train_data, alphas_list=alphas_list)
