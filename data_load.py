@@ -166,6 +166,10 @@ def get_attention_mask_final(dataset, alphas_list):
                         avalues[index] = 1.0
         dataset[i]['mask'] = masks
         dataset[i]['amask'] = amasks
+
+        s = sum(avalues)
+        if s != 0:
+            avalues = [e/s for e in avalues]
         dataset[i]['avalue'] = avalues
 
     return dataset

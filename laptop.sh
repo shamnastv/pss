@@ -9,4 +9,3 @@
 python3 main.py --hidden_dim 50 --lr .001 --batch_size 64 --dataset_name 14semeval_laptop
 python3 main.py --hidden_dim 50 --lr .0005 --batch_size 64 --dataset_name 14semeval_laptop
 python3 main.py --hidden_dim 50 --lr .001 --batch_size 25 --dataset_name 14semeval_laptop
-

@@ -56,9 +56,9 @@ class Model(nn.Module):
         if args.num_layers > 1:
             lstm_dropout = args.dropout
         self.lstm1 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=args.num_layers,
-                                 batch_first=True, bidirectional=True, dropout=lstm_dropout)
+                                 batch_first=True, bidirectional=True, dropout=lstm_dropout, rnn_type=args.rnn_type)
         self.lstm2 = DynamicLSTM(args.embed_dim, args.hidden_dim, num_layers=args.num_layers,
-                                 batch_first=True, bidirectional=True, dropout=lstm_dropout)
+                                 batch_first=True, bidirectional=True, dropout=lstm_dropout, rnn_type=args.rnn_type)
         self.lstm3 = DynamicLSTM(2 * args.hidden_dim, args.hidden_dim, num_layers=args.num_layers,
                                  batch_first=True, bidirectional=True, dropout=lstm_dropout)
 

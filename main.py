@@ -210,6 +210,7 @@ def main():
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay (default: 0.3)')
     parser.add_argument('--early_stop', type=int, default=5, help='early stop')
     parser.add_argument('--beta', type=float, default=.1, help='beta')
+    parser.add_argument("--rnn_type", type=str, default="LSTM", help="lstm or gru")
 
     args = parser.parse_args()
 
