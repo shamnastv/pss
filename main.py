@@ -1,4 +1,5 @@
 import argparse
+import time
 import torch
 import numpy as np
 import torch.nn as nn
@@ -8,6 +9,7 @@ from sklearn.metrics import f1_score
 from data_load import load_data
 from model import Model
 
+start_time = time.time()
 criterion = nn.CrossEntropyLoss()
 mse_loss = nn.MSELoss()
 
@@ -92,7 +94,8 @@ def test_init(epoch, model, scheduler, train_data, test_data, alphas_to_save, ma
     else:
         scheduler.step()
     print('initial', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
-    print('initial', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :', test_f1, flush=True)
+    print('initial', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :', test_f1,
+          'time :', int(time.time() - start_time), flush=True)
     return alphas_to_save, max_test_acc, max_f1
 
 
@@ -170,7 +173,8 @@ def test_final(epoch, model, scheduler, train_data, test_data, max_test_acc, max
     else:
         scheduler.step()
     print('final', k, 'epoch :', epoch, 'accuracy train :', train_acc, 'test :', test_acc, flush=True)
-    print('final', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :', test_f1, flush=True)
+    print('final', k, 'epoch :', epoch, 'f1 train :', train_f1, 'test :',
+          test_f1, 'time :', int(time.time() - start_time), flush=True)
 
     return max_test_acc, max_f1
 
@@ -210,7 +214,7 @@ def main():
     parser.add_argument('--weight_decay', type=float, default=0.0001, help='weight decay (default: 0.3)')
     parser.add_argument('--early_stop', type=int, default=5, help='early stop')
     parser.add_argument('--beta', type=float, default=.1, help='beta')
-    parser.add_argument("--rnn_type", type=str, default="GRU", help="lstm or gru")
+    parser.add_argument("--rnn_type", type=str, default="LSTM", help="lstm or gru")
 
     args = parser.parse_args()
 
